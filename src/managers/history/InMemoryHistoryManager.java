@@ -7,36 +7,34 @@ import java.util.Collections;
 import java.util.HashMap;
 
 public class InMemoryHistoryManager implements HistoryManager {
+    LinkedHistoryList<Task> lk = new LinkedHistoryList<>();
 
-    public static HashMap<Integer, Node<Task>> getNodeHistory() {
-        return LinkedHistoryList.nodeHistory;
+    public HashMap<Integer, Node<Task>> getNodeHistory() {
+        return lk.nodeHistory;
     }
 
     @Override
     public void add(Task task){
-        LinkedHistoryList.linkLast(task);
-        LinkedHistoryList.nodeHistory.put(task.getId(), LinkedHistoryList.getTail());
-
+        lk.linkLast(task);
     }
 
     @Override
     public ArrayList<Task> getHistory(){
-        return LinkedHistoryList.getTasks();
+        return lk.getTasks();
     }
 
     @Override
     public void remove(int id){
-        LinkedHistoryList.nodeHistory.remove(id);
+        lk.remove(id);
     }
 
-
     public static class LinkedHistoryList<T>{
-        private static final HashMap<Integer, Node<Task>> nodeHistory = new HashMap<>();
-        static Node<Task> head;
-        static Node<Task> tail;
-        static int size = 0;
+        private final HashMap<Integer, Node<Task>> nodeHistory = new HashMap<>();
+        private Node<Task> head;
+        private Node<Task> tail;
+        private int size = 0;
 
-        public static void linkLast(Task element) {
+        public void linkLast(Task element) {
             final Node<Task> oldTail = tail;
             final Node<Task> newNode = new Node<>(oldTail, element, null);
             tail = newNode;
@@ -51,10 +49,12 @@ public class InMemoryHistoryManager implements HistoryManager {
                 removeNode(nodeHistory.get(element.getId()));
             }
 
+            nodeHistory.put(element.getId(), tail);
+
             size++;
         }
 
-        public static ArrayList<Task> getTasks(){
+        public ArrayList<Task> getTasks(){
             ArrayList<Task> history = new ArrayList<>();
 
             if (!(head == null)) {
@@ -68,9 +68,13 @@ public class InMemoryHistoryManager implements HistoryManager {
             return history;
         }
 
-        public static void removeNode(Node<Task> node){
+        public void remove(int id){
+            nodeHistory.remove(id);
+        }
+
+        public void removeNode(Node<Task> node){
             if (!(node == null)) {
-                if ((InMemoryHistoryManager.getNodeHistory().containsKey(node.getData().getId()))) {
+                if ((nodeHistory.containsKey(node.getData().getId()))) {
                     Node<Task> prevNode = node.getPrev();
                     Node<Task> nextNode = node.getNext();
                     if (prevNode != null) {
@@ -80,35 +84,13 @@ public class InMemoryHistoryManager implements HistoryManager {
                         nextNode.setPrev(prevNode);
                     }
                     nodeHistory.remove(node.getData().getId());
-                    if (getHead() == node) {
-                        setHead(nextNode);
-                    } else if (getTail() == node) {
-                        setTail(nextNode);
+                    if (head == node) {
+                        head = nextNode;
+                    } else if (tail == node) {
+                        tail = nextNode;
                     }
                 }
             }
-        }
-
-
-
-        public static Node<Task> getTail() {
-            return tail;
-        }
-
-        public static Node<Task> getHead() {
-            return head;
-        }
-
-        public static void setHead(Node<Task> head) {
-            LinkedHistoryList.head = head;
-        }
-
-        public static void setTail(Node<Task> tail) {
-            LinkedHistoryList.tail = tail;
-        }
-
-        public int getSize() {
-            return size;
         }
 
         @Override
