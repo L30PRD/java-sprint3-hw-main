@@ -1,0 +1,10 @@
+id,type,name,status,description,epic
+1,TASK,Учиться,NEW,:),
+2,EPIC,Переезд,DONE,Ура!,
+5,EPIC,Уборка,IN_PROGRESS,Опять:(,
+3,SUBTASK,Разобрать вещи,DONE,Так надо,2,
+4,SUBTASK,Упаковать коробки,DONE,Плотно-плотно!,2,
+6,SUBTASK,Помыть окна,IN_PROGRESS,Без разводов!,5,
+7,SUBTASK,Убрать пыль,DONE,Всю!,5,
+ 
+7,4,6,1,3,5,
