@@ -6,9 +6,12 @@ import tasks.Subtask;
 import tasks.Task;
 import managers.task.Status;
 
+import java.io.File;
+
 public class Main {
     public static void main(String[] args) {
-        TaskManager taskManager = Managers.getDefault();
+        File f = new File("");
+        TaskManager taskManager = Managers.getDefault(f);
 
         Task task = new Task("Работа", "Работать");
         taskManager.makeTask(task);

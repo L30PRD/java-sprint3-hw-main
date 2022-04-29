@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileBackedTasksManager extends InMemoryTaskManager {
-    static File data;
+    public static File file;
     private static final String home = System.getProperty("./");
     public static void main(String[] args) {
         File file = new File(home, "testFile.csv");
 
-        TaskManager taskManager5 = Managers.getDefault();
+        TaskManager taskManager5 = Managers.getDefault(file);
 
         Task task = new Task("Работа", "Работать");
         taskManager5.makeTask(task);
@@ -23,7 +23,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         Epic epic = new Epic("Переезд", "Ура!");
         taskManager5.makeEpic(epic);
 
-        Subtask subtask = new Subtask("Собрать вещи","Все-все!", epic);
+        Subtask subtask = new Subtask("Собрать вещи", "Все-все!", epic);
         taskManager5.makeSubtask(subtask);
         taskManager5.updateSubtask(subtask, subtask.getId(), Status.IN_PROGRESS);
 
@@ -81,17 +81,22 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         taskManager5.getTaskById(7);
         taskManager5.history().forEach(System.out::println);
         System.out.println("=========================================================");
+        System.out.println("Display manager5");
+        System.out.println(toString(taskManager5));
+        System.out.println("=========================================================");
+        System.out.println("Display manager from file");
+        TaskManager manager = loadFromFile(file);
+        System.out.println(toString(manager));
+        System.out.println("=========================================================");
 
-        TaskManager tp = loadFromFile(file);
-        System.out.println(toString(tp));
     }
 
-    public FileBackedTasksManager(File data) {
-        FileBackedTasksManager.data = data;
+    public FileBackedTasksManager(File file) {
+        FileBackedTasksManager.file = file;
     }
 
     public void save(){
-        try(FileWriter fileWriter = new FileWriter(String.valueOf(data))){
+        try(FileWriter fileWriter = new FileWriter(String.valueOf(file))){
             StringBuilder sb = new StringBuilder("id,type,name,status,description,epic\n");
 
             for(Integer id : taskMap.keySet()){
@@ -100,7 +105,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                 sb.append(TaskType.TASK).append(",");
                 sb.append(task.getName()).append(",");
                 sb.append(task.getStatus()).append(",");
-                sb.append(task.getAbout()).append(",\n");
+                sb.append(task.getAbout()).append("\n");
             }
 
             for(Integer id : epicMap.keySet()){
@@ -109,7 +114,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                 sb.append(TaskType.EPIC).append(",");
                 sb.append(epic.getName()).append(",");
                 sb.append(epic.getStatus()).append(",");
-                sb.append(epic.getAbout()).append(",\n");
+                sb.append(epic.getAbout()).append("\n");
             }
 
             for(Integer id : subTaskMap.keySet()){
@@ -119,11 +124,11 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                 sb.append(subtask.getName()).append(",");
                 sb.append(subtask.getStatus()).append(",");
                 sb.append(subtask.getAbout()).append(",");
-                sb.append(subtask.getEpic().getId()).append(",\n");
+                sb.append(subtask.getEpic().getId()).append("\n");
 
             }
 
-            sb.append(" \n");
+            sb.append(System.lineSeparator());
 
             for(Task task : history()){
                 sb.append(task.getId()).append(",");
@@ -144,7 +149,6 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                     task.getStatus() + "," +
                     task.getAbout();
             return sb;
-
         }
         return null;
     }
@@ -196,12 +200,15 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         return null;
     }
 
-    public static List<Integer> fromString(String value){
+    public static List<Integer>  fromStringList(String value){
         List<Integer> idList = new ArrayList<>();
-        String[] data = value.split(",");
-        for (String id : data){
-            if(Integer.parseInt(id) > 0){
-                idList.add(Integer.parseInt(id));
+        String idString[] = value.split(System.lineSeparator());
+        for (int i = 0; i < idString.length; i++){
+            if (idString[i].isBlank()){
+                String t[] = idString[i+1].split(",");
+                for(String b : t){
+                    idList.add(Integer.parseInt(b));
+                }
             }
         }
         return idList;
@@ -210,7 +217,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     public static String toString(TaskManager manager) {
         try {
             StringBuilder sb = new StringBuilder();
-            BufferedReader br = new BufferedReader(new FileReader(getData()));
+            BufferedReader br = new BufferedReader(new FileReader(getFile()));
             String line;
             while ((line = br.readLine()) != null) sb.append(line + "\n");
             return sb.toString();
@@ -221,11 +228,25 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     }
 
     public static FileBackedTasksManager loadFromFile(File file) {
-        return new FileBackedTasksManager(file);
-    }
+        try {
+            Reader fileReader = new FileReader(file);
+            BufferedReader br = new BufferedReader(fileReader);
+            StringBuilder sb = new StringBuilder();
+            while (br.ready()) {
+                String line = br.readLine();
+                sb.append(line + System.lineSeparator());
+            }
+            br.close();
 
-    public static File getData() {
-        return data;
+            File newFile = new File(home, "testLoader.csv");
+            Writer fileWriter = new FileWriter(newFile);
+            fileWriter.write(sb.toString());
+            fileWriter.close();
+            return new FileBackedTasksManager(newFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -249,21 +270,22 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     @Override
     public Task getTaskById(int id){
         if (taskMap.containsKey(id)) {
-            taskManager.add(taskMap.get(id));
+            inMemoryHistoryManager.add(taskMap.get(id));
             save();
             return taskMap.get(id);
         } else if (epicMap.containsKey(id)){
-            taskManager.add(epicMap.get(id));
+            inMemoryHistoryManager.add(epicMap.get(id));
             save();
             return  epicMap.get(id);
         } else if (subTaskMap.containsKey(id)){
-            taskManager.add(subTaskMap.get(id));
+            inMemoryHistoryManager.add(subTaskMap.get(id));
             save();
             return  subTaskMap.get(id);
         }
         return null;
     }
 
+    @Override
     public void removeTaskById(int id){
         if (taskMap.containsKey(id)){
             taskMap.remove(id);
@@ -300,10 +322,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         save();
     }
 
-    @Override
-    public String toString() {
-        return "FileBackedTasksManager{" +
-                "data=" + data.toString() +
-                '}';
+    public static File getFile() {
+        return file;
     }
 }
