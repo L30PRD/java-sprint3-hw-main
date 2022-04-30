@@ -1,17 +1,29 @@
 package tasks;
 
 import  managers.task.Status;
+import managers.task.TaskType;
 
 public class Task {
     private String name;
     private String about;
     private int id;
     private Status status;
+    private TaskType type;
 
     public Task(String name, String about) {
         this.name = name;
         this.about = about;
         this.status = Status.NEW;
+        this.type = TaskType.TASK;
+
+    }
+
+    public TaskType getType() {
+        return type;
+    }
+
+    public void setType(TaskType type) {
+        this.type = type;
     }
 
     public void setId(int id) {

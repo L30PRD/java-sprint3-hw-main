@@ -1,11 +1,25 @@
 package tasks;
 
+import managers.task.TaskType;
+
 public class Subtask extends Task {
     private Epic epic;
+    private TaskType type;
 
     public Subtask(String name, String about, Epic epic) {
         super(name, about);
         this.epic = epic;
+        this.type = TaskType.SUBTASK;
+    }
+
+    @Override
+    public TaskType getType() {
+        return type;
+    }
+
+    @Override
+    public void setType(TaskType type) {
+        this.type = type;
     }
 
     public Epic getEpic() {

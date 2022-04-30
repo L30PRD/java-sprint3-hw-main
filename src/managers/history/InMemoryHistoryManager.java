@@ -28,8 +28,6 @@ public class InMemoryHistoryManager implements HistoryManager {
         lk.remove(id);
     }
 
-
-
     public static class LinkedHistoryList<T>{
         private final HashMap<Integer, Node<Task>> nodeHistory = new HashMap<>();
         private Node<Task> head;
@@ -94,8 +92,6 @@ public class InMemoryHistoryManager implements HistoryManager {
                 }
             }
         }
-
-
 
         @Override
         public String toString() {
