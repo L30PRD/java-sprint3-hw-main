@@ -12,7 +12,6 @@ import java.util.List;
 
 public class FileBackedTasksManager extends InMemoryTaskManager {
     public static File file;
-    //static HistoryManager history = Managers.getDefaultHistory();
     private static final String home = System.getProperty("./");
     public static void main(String[] args) {
         File file = new File(home, "testFile.csv");
@@ -83,13 +82,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         taskManager5.getTaskById(7);
         taskManager5.history().forEach(System.out::println);
         System.out.println("=========================================================");
-        System.out.println("Display manager5");
-        //System.out.println(toString(taskManager5));
-        System.out.println("=========================================================");
-        System.out.println("Display manager from file");
         TaskManager manager = loadFromFile(file);
-        //System.out.println(toString(manager));
-        System.out.println("=========================================================");
 
     }
 
@@ -98,7 +91,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     }
 
     public void save(){
-        try(FileWriter fileWriter = new FileWriter(new File("testlist.csv"))){
+        try(FileWriter fileWriter = new FileWriter(file)){
             StringBuilder sb = new StringBuilder("id,type,name,status,description,epic\n");
 
             for(Integer id : taskMap.keySet()){
@@ -136,6 +129,12 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
             }
 
             fileWriter.write(sb.toString());
+            fileWriter.close();
+
+            File newFile = new File(home, "testLoader.csv");
+            Writer fileWriter2 = new FileWriter(newFile);
+            fileWriter2.write(sb.toString());
+            fileWriter2.close();
 
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка сохранения.");
@@ -255,6 +254,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                 sb.append(line + System.lineSeparator());
             }
             br.close();
+            fileReader.close();
 
             String listTask[] = sb.toString().split(System.lineSeparator());
             for(int i = 1; i < listTask.length; i++) {
@@ -270,10 +270,9 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
             }
 
             List<Integer> idList = fromStringList(sb.toString());
-            for(Integer id : idList){
+            for(Integer id : idList) {
                 history.add(loader.getTaskById(id));
             }
-
             return loader;
         } catch (IOException e) {
             e.printStackTrace();
